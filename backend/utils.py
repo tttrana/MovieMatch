@@ -1,6 +1,6 @@
 import numpy as np
 
-def extract_features(movie, mlb_genres):
+def extract_features(movie, mlb_genres, return_names=False):
     # Genres as binary vector double weight
     genres_list = movie.genres.split(", ") if movie.genres else []
     genres_vec = mlb_genres.transform([genres_list])[0]
@@ -12,4 +12,9 @@ def extract_features(movie, mlb_genres):
 
     # Combine all features
     features = np.concatenate([genres_vec, [avg_rating, num_votes]])
+
+    if return_names:
+        genre_names = list(mlb_genres.classes_) * 2  # double weight
+        feature_names = genre_names + ["averageRating", "numVotes"]
+        return features, feature_names
     return features

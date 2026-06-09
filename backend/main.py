@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 from database import engine, Base, get_db
-from models import Movie, Rating, User, UserUpdate
+from models import Movie, Rating, User, UserUpdate  # Import models to register them with Base
 from recommender import Recommender
 from predict import RatingPredictor
 from auth import (
@@ -33,7 +33,7 @@ logger = logging.getLogger("uvicorn")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=["http://localhost:3000", "http://localhost:5173", "http://frontend:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -94,24 +94,40 @@ def create_access_token(data: dict):
 @app.on_event("startup")
 async def startup_event():
     print(f"{time.strftime('%H:%M:%S')} - Starting startup event...")
-    Base.metadata.create_all(bind=engine)
-    print(f"{time.strftime('%H:%M:%S')} - Database tables created")
-    db = next(get_db())
-    load_imdb_data(db)
-    print(f"{time.strftime('%H:%M:%S')} - IMDb data loaded")
-    global recommender, rating_predictor
-    recommender = Recommender(db)
-    recommender.load()
-    rating_predictor = RatingPredictor(model_dir="models")
-    rating_predictor.load()
-    print(f"{time.strftime('%H:%M:%S')} - Recommender and RatingPredictor initialized")
-    logger.info(f"Recommender initialized: {recommender is not None}")
+    try:
+        Base.metadata.create_all(bind=engine)
+        print(f"{time.strftime('%H:%M:%S')} - Database tables created")
+    except Exception as e:
+        print(f"{time.strftime('%H:%M:%S')} - Error creating tables: {e}")
+        import time as time_module
+        time_module.sleep(2)
+        Base.metadata.create_all(bind=engine)
+        print(f"{time.strftime('%H:%M:%S')} - Database tables created (retry)")
+    
+    try:
+        db = next(get_db())
+        load_imdb_data(db)
+        print(f"{time.strftime('%H:%M:%S')} - IMDb data loaded")
+    except Exception as e:
+        print(f"{time.strftime('%H:%M:%S')} - Warning: Could not load IMDb data: {e}")
+    
+    try:
+        global recommender, rating_predictor
+        recommender = Recommender(db)
+        recommender.load()
+        rating_predictor = RatingPredictor(model_dir="models")
+        rating_predictor.load()
+        print(f"{time.strftime('%H:%M:%S')} - Recommender and RatingPredictor initialized")
+        logger.info(f"Recommender initialized: {recommender is not None}")
+    except Exception as e:
+        print(f"{time.strftime('%H:%M:%S')} - Warning: Could not initialize models: {e}")
+        logger.warning(f"Model initialization failed: {e}")
 
 def load_imdb_data(db: Session):
     if db.query(Movie).count() == 0:
-        print(f"{time.strftime('%H:%M:%S')} - Loading movies from imdb_normalized.csv...")
+        print(f"{time.strftime('%H:%M:%S')} - Loading movies from datasets/imdb.csv...")
         import pandas as pd
-        df = pd.read_csv("imdb.csv")
+        df = pd.read_csv("datasets/imdb.csv")
         print(f"{time.strftime('%H:%M:%S')} - Number of movies to load: {len(df)}")
         for i, row in df.iterrows():
             if i % 1000 == 0:

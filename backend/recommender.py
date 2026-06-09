@@ -53,8 +53,39 @@ class Recommender:
     def get_recommendations(self, user_id: int, n: int = 10, rating_predictor=None):
         user_ratings = self.user_ratings[self.user_ratings["user_id"] == user_id]
         if user_ratings.empty:
-            return self._get_top_n_movies(n)
-         
+            movies = self.db.query(Movie).all()
+            movie_scores = []
+            for m in movies:
+                predicted_rating = None
+                if rating_predictor is not None:
+                    try:
+                        predicted_rating = rating_predictor.predict(user_id, m.id)
+                    except Exception as e:
+                        print(f"Eroare predicție: {e}")
+                        predicted_rating = None
+                movie_scores.append({
+                    "id": m.id,
+                    "title": m.title,
+                    "titleType": m.titleType,
+                    "startYear": m.startYear,
+                    "endYear": m.endYear,
+                    "runtimeMinutes": m.runtimeMinutes,
+                    "genres": m.genres,
+                    "totalEpisodes": m.totalEpisodes,
+                    "directors": m.directors,
+                    "writers": m.writers,
+                    "averageRating": m.averageRating,
+                    "numVotes": m.numVotes,
+                    "predicted_rating": predicted_rating,
+                    "userRating": None
+                })
+
+            movie_scores.sort(
+                key=lambda x: x["predicted_rating"] if x["predicted_rating"] is not None else -np.inf,
+                reverse=True
+            )
+            return movie_scores[:n]
+
         rated_movies = user_ratings.merge(self.movie_data, left_on="movie_id", right_index=True)
         cluster_ratings = rated_movies.groupby("cluster")["rating"].mean().to_dict()
         rated_movie_ids = set(user_ratings["movie_id"])
@@ -68,7 +99,6 @@ class Recommender:
         
         candidate_movies = candidate_movies - rated_movie_ids
 
-        # limit to 100 titles for performance
         candidate_movies = list(candidate_movies)[:100]
 
         movie_objs = self.db.query(Movie).filter(Movie.id.in_(candidate_movies)).all()
@@ -84,7 +114,6 @@ class Recommender:
             avg_rating = movie.averageRating if movie.averageRating is not None else 0
             num_votes = movie.numVotes if movie.numVotes is not None else 0
 
-            # Predict user rating if predictor is provided
             predicted_rating = None
             if rating_predictor is not None:
                 try:
@@ -92,30 +121,26 @@ class Recommender:
                 except Exception:
                     predicted_rating = None
 
-            # Weighted score: prioritize both average rating and number of votes
-            # IMDb formula: weighted = (v/(v+m))*R + (m/(v+m))*C
-            # where R = avg_rating, v = num_votes, m = 1500 (threshold), C = mean of all avg_ratings
-            m = 1500
-            C = self.movie_data["averageRating"].mean() if not np.isnan(self.movie_data["averageRating"].mean()) else 0
-            if num_votes > 0:
-                weighted_score = (num_votes / (num_votes + m)) * avg_rating + (m / (num_votes + m)) * C
-            else:
-                weighted_score = 0
-
             movie_scores.append({
                 "id": movie_id,
                 "title": movie.title,
-                "averageRating": avg_rating,
+                "titleType": movie.titleType,
                 "startYear": movie.startYear,
+                "endYear": movie.endYear,
+                "runtimeMinutes": movie.runtimeMinutes,
+                "genres": movie.genres,
+                "totalEpisodes": movie.totalEpisodes,
+                "directors": movie.directors,
+                "writers": movie.writers,
+                "averageRating": avg_rating,
                 "numVotes": num_votes,
                 "cluster_score": cluster_score,
-                "weighted_score": weighted_score,
-                "predicted_rating": predicted_rating
+                "predicted_rating": predicted_rating,
+                "userRating": None
             })
 
-        # Sort by predicted_rating if available, else by weighted_score
         movie_scores.sort(
-            key=lambda x: (x["predicted_rating"] if x["predicted_rating"] is not None else -1, x["weighted_score"]),
+            key=lambda x: (x["predicted_rating"] if x["predicted_rating"] is not None else -1, x["averageRating"] if x["averageRating"] is not None else -1),
             reverse=True
         )
         return movie_scores[:n]

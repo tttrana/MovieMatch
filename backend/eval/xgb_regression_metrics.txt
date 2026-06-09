@@ -1,0 +1,2 @@
+Mean Squared Error (MSE): 1.8609
+R2 Score: 0.6214

@@ -1,10 +1,8 @@
 from sqlalchemy import Column, Integer, String, Float, Boolean, ForeignKey
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from typing import Optional
 from pydantic import EmailStr, BaseModel
-
-Base = declarative_base()
+from database import Base
 
 class Movie(Base):
     __tablename__ = "movies"
