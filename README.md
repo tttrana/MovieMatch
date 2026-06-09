@@ -132,7 +132,7 @@ SECRET_KEY=your_secret_key_here
 VITE_API_URL=http://localhost:8000
 ```
 
-## 📝 Notes
+## Notes
 
 - PostgreSQL data is persisted in a Docker volume (`postgres_data`) and survives container restarts
 - To reset the database, run: `docker compose down -v`
