@@ -1,18 +1,12 @@
-# MovieMatch - Movie Recommendation System
+# MovieMatch - Smart Movie Recommendation System
 
 A full-stack movie recommendation application built with FastAPI (backend), React (frontend), and PostgreSQL (database).
 
-## 🚀 Quick Start with Docker
+## Quick Start with Docker
 
 ### Prerequisites
 - [Docker](https://www.docker.com/products/docker-desktop)
 - [Docker Compose](https://docs.docker.com/compose/install/)
-
-Works on:
-- ✅ Windows (Docker Desktop)
-- ✅ macOS (Docker Desktop)
-- ✅ Linux (Docker + Docker Compose)
-- ✅ CachyOS and other Linux distributions
 
 ### One-Command Setup
 
@@ -32,8 +26,6 @@ Works on:
    http://localhost:3000
    ```
 
-**That's it!** Everything is containerized and will work identically on any machine with Docker.
-
 ### Stopping Services
 
 ```bash
@@ -50,7 +42,7 @@ docker compose down -v       # Stop and remove volumes (clears database)
 | Backend Docs | http://localhost:8000/docs | Swagger API documentation |
 | Database | localhost:5432 | PostgreSQL (user: postgres, password: password) |
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 MovieMatch/
@@ -71,7 +63,7 @@ MovieMatch/
 └── README.md             # This file
 ```
 
-## 🛠️ Development
+## Development
 
 ### Local Development (without Docker)
 
@@ -97,7 +89,7 @@ Ensure PostgreSQL is running locally at `localhost:5432` with:
 - Password: `password`
 - Database: `moviematch`
 
-## 🐳 Docker Commands
+## Docker Commands
 
 ```bash
 # Start all services
@@ -123,7 +115,7 @@ docker compose up --build
 docker compose down -v
 ```
 
-## 🔧 Configuration
+## Configuration
 
 ### Environment Variables
 
@@ -147,7 +139,7 @@ VITE_API_URL=http://localhost:8000
 - Backend automatically reloads on code changes (development mode)
 - For production, modify the `docker-compose.yml` to remove `--reload` flag and use proper SECRET_KEY
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 **Tables not created / "relation does not exist" errors:**
 ```bash
@@ -183,65 +175,3 @@ docker compose up
 - Ensure `VITE_API_URL=http://localhost:8000` (from frontend container perspective)
 - Verify backend is responding: `http://localhost:8000/docs`
 - Check CORS settings in backend/main.py
-
-**Linux/CachyOS specific:**
-- Make sure Docker daemon is running: `sudo systemctl start docker`
-- If permission denied, add user to docker group: `sudo usermod -aG docker $USER`
-- Then restart Docker: `sudo systemctl restart docker`
-
-## 🔄 Deployment to GitHub
-
-### Step 1: Create GitHub Repository
-
-1. Go to [GitHub](https://github.com/new)
-2. Create a new repository named `MovieMatch`
-3. **Don't** initialize with README (we already have one)
-
-### Step 2: Push from Command Line
-
-```bash
-cd c:\Files\Facultate\LICENTA\MovieMatch
-
-# Configure git (if first time)
-git config --global user.name "Your Name"
-git config --global user.email "your.email@example.com"
-
-# Add remote and push
-git remote add origin https://github.com/YOUR-USERNAME/MovieMatch.git
-git branch -M main
-git push -u origin main
-```
-
-### Step 3: Clone and Run on Any Machine
-
-**On CachyOS or any Linux machine:**
-
-```bash
-# Clone
-git clone https://github.com/YOUR-USERNAME/MovieMatch.git
-cd MovieMatch
-
-# Ensure Docker is installed and running
-sudo systemctl start docker
-
-# Run
-docker compose up
-```
-
-Then visit `http://localhost:3000` 
-
-🎉 **Done!** The entire application will work identically on Windows, macOS, Linux, CachyOS, etc.
-
-## 📦 Build for Production
-
-The project is ready for deployment to platforms like:
-- Docker registries (Docker Hub, AWS ECR, etc.)
-- Kubernetes clusters
-- Cloud platforms (AWS ECS, Google Cloud Run, Azure Container Instances, etc.)
-
-Simply push the Docker images after building:
-```bash
-docker compose build
-docker image push your-registry/moviematch-backend:latest
-docker image push your-registry/moviematch-frontend:latest
-```
